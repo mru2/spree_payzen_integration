@@ -36,7 +36,7 @@ describe PayzenIntegration::Params do
     end
     
     describe "self.for_order" do
-       let(:order)        { Factory :order }
+       let(:order)        { Factory :order, :number => "R763468221", :total => 120.00 }
        let(:payzen_param) { PayzenIntegration::Params.for_order(order) }
        
        before(:each) do
@@ -56,7 +56,7 @@ describe PayzenIntegration::Params do
        specify { payzen_param.vads_amount.should eq 12000 }
        specify { payzen_param.vads_ctx_mode.should eq "TEST" }
        specify { payzen_param.vads_currency.should eq "978" }
-       specify { payzen_param.vads_cust_email.should eq "john@doe.com" }
+       specify { payzen_param.vads_cust_email.should eq order.user.email }
        specify { payzen_param.vads_order_id.should eq "R763468221" }
        specify { payzen_param.vads_page_action.should eq "PAYMENT" }
        specify { payzen_param.vads_payment_config.should eq "SINGLE" }

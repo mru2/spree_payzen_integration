@@ -5,3 +5,10 @@ describe PayzenIntegration::Config do
     PayzenIntegration::Config.get(:ctx_mode).should be_a String
   end
 end
+
+
+describe "Payzen load" do
+  it "should have been regitered as Payment method" do
+    Gateway.providers.map(&:name).should include "PaymentMethod::Payzen"
+  end
+end

@@ -10,4 +10,14 @@ Order.class_eval do
     end
     return info
   end
+  
+  def payzen_validation
+    if self.payment_method.class == PaymentMethod::Payzen and self.state == "confirm"
+      return false
+    else
+      return true 
+    end
+  end
+  
+  
 end

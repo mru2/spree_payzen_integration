@@ -14,17 +14,9 @@ module PayzenIntegration
       # Register the payment method
       PaymentMethod::Payzen.register
 
-      # Disallow ssl in production
-      Spree::Config.set(:allow_ssl_in_production => false) if defined?(Spree::Config)
     end
 
     config.to_prepare &method(:activate).to_proc
-
-    # Initialize the payzen config YAML
-    initializer 'payzen_integration.load_config' do |app|
-      PAYZEN_CONFIG = YAML.load_file("#{Rails.root}/config/payzen.yml")      
-    end
-
   end
 end
 
