@@ -76,12 +76,12 @@ describe PayzenIntegration::Params do
     describe "create_string_from_config_hash" do
       before(:each) do
         PayzenIntegration::Params.class_eval { public :create_string_from_config_hash }
-        PayzenIntegration::Config.stub(:get).and_return "secret"
+        PayzenIntegration::Config.stub(:get).and_return 12345
       end
 
       it "should sort hash" do
         hash = { :b => "b", :a => 1, :c => "c"}
-        params.create_string_from_config_hash(hash).should eq "1+b+c+secret"
+        params.create_string_from_config_hash(hash).should eq "1+b+c+12345"
       end
     
       after(:each) do

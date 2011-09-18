@@ -89,7 +89,7 @@ module PayzenIntegration
       hash.keys.sort.each do |key|
         to_code = to_code + hash[key].to_s + "+"
       end
-      to_code += PayzenIntegration::Config.get :certificate
+      to_code += (PayzenIntegration::Config.get :certificate).to_s
     end
 
     # Compute the trans_date attribute
