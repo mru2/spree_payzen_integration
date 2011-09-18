@@ -1,8 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+#require 'ruby-debug'
 
 describe CheckoutController do
   include Devise::TestHelpers
-  let(:user)           { Factory :user  }
+  let(:user)  { Factory :user  }
+  
   before(:each) do
     sign_in user
   end
@@ -11,13 +13,17 @@ describe CheckoutController do
     let(:order_confirm)  { Factory :order, :user => user, :state => "confirm" }
     let(:order_cart)     { Factory :order, :user => user, :state => "address" }
     
+    before(:each) do
+      order_confirm.stub(:checkout_allowed?).and_return(true)
+      Order.should_receive(:find_by_id).and_return(order_confirm)
+    end
+    
     it "an order with 'confirm' state and 'Payzen' payment method should not be changed through update" do
-       pending
        session[:order_id] = order_confirm.id
-       order_confirm.stub_chain(:payzen_validation, :class).and_return(PaymentMethod::Payzen)
+       order_confirm.stub_chain(:payment_method, :class).and_return(PaymentMethod::Payzen)
        get :update, :state => order_confirm.state
-      #order_confirm.should_receive :payzen_validation
-      #order_confirm.reload.state.should eq "confirm"
+       debugger
+       controller.params[:state].should eq "confirm" #means we remained on the samed page which is what was expected.
     end
     
     # transition :from => 'cart',     :to => 'address'
@@ -44,29 +50,25 @@ describe CheckoutController do
   
   describe "payzen action" do
     before(:each) do
-      @valid_payzen_attributes = {
-      :signature            => "42d7a67a72e36f4b5b69c3ecbae9283542d5a5c5",
-      :vads_action_mode     => "INTERACTIVE",
-      :vads_amount          => 2299,
-      :vads_currency        => "978",
-      :vads_cust_email      => "spree@example.com",
-      :vads_ctx_mode        => "TEST",
-      :vads_order_id        => "R281721355",
-      :vads_order_info      => "Order:1069267033 -- Customer:spree@example.com/1 -- Ruby on Rails Ringer T-Shirt(17.99)x1 -- ",
-      :vads_page_action     => "PAYMENT",
-      :vads_payment_config  => "SINGLE",
-      :vads_site_id         => "99563855",
-      :vads_trans_date      => "20110918222213",
-      :vads_trans_id        => "067033",
-      :vads_validation_mode => "0",
-      :vads_version         => "V2"
-      }
-      @order = Factory :order, :number => @valid_payzen_attributes[:vads_order_id], :user => user
+      @order = Factory :order, :user => user
+      @payment  = double("payment")      
+      @payment.stub(:started_processing)
+      @payment.stub(:complete)      
+      @payment.stub(:fail)
+      @order.stub_chain(:payments, :last).and_return(@payment)
+      Order.stub(:where).and_return [@order]
     end
     
-    it "should find the created order" do
-      @order.stub_chain(:payments,:last).and_return(Factory :payment)
-      get :payzen, @valid_payzen_attributes
+    it "should fail to complete payment with partial attributes" do
+      PayzenIntegration::Params.should_receive(:check_returned_params).and_raise
+      @payment.should_receive(:fail)    
+      get :payzen
+    end
+    
+    it "should complete payment with valid attributes" do
+      PayzenIntegration::Params.should_receive(:check_returned_params).and_return(:true)
+      @payment.should_receive(:complete)    
+      get :payzen
     end
     
     

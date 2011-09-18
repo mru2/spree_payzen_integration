@@ -1,5 +1,10 @@
 module PayzenIntegration
 
+  class ReturnCode < StandardError; end
+  class PaymentCertificate < StandardError; end
+  class AuthMode < StandardError; end
+  class Signature < StandardError; end
+
   # Represents the params sent to and returned from payzen
   class Params
     
@@ -22,6 +27,11 @@ module PayzenIntegration
                
     # Create the accessors and assessors
     PARAMS.each{|p| attr_accessor p}
+
+    # Returns the signature of a set of params
+    def signature
+      self.class.compute_signature payzen_param_hash
+    end
 
     # Create the params from an order
     def self.for_order(order)
@@ -48,9 +58,9 @@ module PayzenIntegration
     def self.check_returned_params(params)
 
       # Check if payment was ok
-      raise "Wrong return code : #{params[:vads_result]}"  unless params[:vads_result] == "00"        # code de retour, "00" = "tout s'est bien passé"
-      raise "No payment certificate"                       if params[:vads_payment_certificate] == "" # Pas de certificat = probleme
-      raise "Wrong auth mode : #{params[:vads_auth_mode]}" if params[:vads_auth_mode] != "FULL"       # Autorisation du paiement
+      raise ReturnCode,         "Wrong return code : #{params[:vads_result]}"  unless params[:vads_result] == "00"        # code de retour, "00" = "tout s'est bien passé"
+      raise PaymentCertificate, "No payment certificate"                       if params[:vads_payment_certificate] == "" # Pas de certificat = probleme
+      raise AuthMode,           "Wrong auth mode : #{params[:vads_auth_mode]}" if params[:vads_auth_mode] != "FULL"       # Autorisation du paiement
       
       # Check if the signature is valid
       temp = {}.merge(params)
@@ -59,13 +69,9 @@ module PayzenIntegration
       confirm_signature = compute_signature(temp)
     
       if signature != confirm_signature then 
-        raise "Wrong signature"
-      end      
-    end
-        
-    # Returns the signature of a set of params
-    def signature          
-      compute_signature payzen_param_hash
+        raise Signature, "Wrong signature"
+      end
+      return true  
     end
 
     private
@@ -80,11 +86,11 @@ module PayzenIntegration
     end
     
     # Compute a signature from a hash
-    def compute_signature(hash)
+    def self.compute_signature(hash)
       Digest::SHA1.hexdigest create_string_from_config_hash hash
     end
     
-    def create_string_from_config_hash(hash)
+    def self.create_string_from_config_hash(hash)
       to_code = String.new
       hash.keys.sort.each do |key|
         to_code = to_code + hash[key].to_s + "+"
