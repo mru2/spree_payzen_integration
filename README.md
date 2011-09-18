@@ -1,7 +1,7 @@
 PayzenIntegration
 =================
 
-Introduction goes here.
+Introduction goes here
 
 
 Example
