@@ -2,13 +2,9 @@ source 'http://rubygems.org'
 
 gem 'rails', '3.0.9'
 
-# Bundle edge Rails instead:
-# gem 'rails', :git => 'git://github.com/rails/rails.git'
-
 gem 'sqlite3-ruby', :require => 'sqlite3'
 gem 'spree', '0.60.1'
 gem 'spree_i18n', :git => 'git://github.com/spree/spree_i18n.git'
-
 gem "payzen_integration", :path => "../../"
 
 gem 'spork'

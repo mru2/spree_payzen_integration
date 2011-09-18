@@ -9,7 +9,7 @@ describe PayzenIntegration::Params do
       end
 
       it "should render 1234567890 from 1234567890" do
-        PayzenIntegration::Params.fill_with_zero(1234567890,6).should eq "1234567890" 
+        PayzenIntegration::Params.fill_with_zero("1234567890",6).should eq "1234567890" 
       end
     end
 
@@ -111,7 +111,6 @@ describe PayzenIntegration::Params do
         PayzenIntegration::Params.class_eval { public :payzen_param_hash }
         @saved_const = PayzenIntegration::Params::PARAMS
         PayzenIntegration::Params.const_set(:PARAMS, [:foo, :bar])
-        #PayzenIntegration::Params.stub(:PARAMS).and_return [:foo, :baz]
         params.stub(:foo).and_return "foo_value"
         params.stub(:bar).and_return "bar_value"
       end
