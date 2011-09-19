@@ -10,48 +10,55 @@ describe CheckoutController do
   end
   
   describe "update method" do
-    let(:order_confirm)  { Factory :order, :user => user, :state => "confirm" }
-    let(:order_cart)     { Factory :order, :user => user, :state => "address" }
+    let(:order)  { Factory :order, :user => user }
     
     before(:each) do
-      order_confirm.stub(:checkout_allowed?).and_return(true)
-      Order.should_receive(:find_by_id).and_return(order_confirm)
+      order.stub(:checkout_allowed?).and_return(true)
+      Order.should_receive(:find_by_id).and_return(order)
+      session[:order_id] = order.id
+      order.stub(:next).and_return(true)
+      order.stub(:update_attributes).and_return(true)
+    end
+
+    describe "with Payzen Payment Method" do
+      before(:each) do
+        order.stub_chain(:payment_method, :class).and_return(PaymentMethod::Payzen)
+      end
+      
+      it "an order with 'confirm' state should not go to the next step" do
+        order.stub(:state).and_return("confirm")
+        order.should_not_receive(:next)
+        get :update, :state => order.state
+      end
+
+      it "an order with 'cart', 'address' or 'delivery' should go to the next step" do
+        ["cart", "address", "delivery"].each do |step|
+          order.stub_chain(:state).and_return(step)
+          order.should_receive(:next)
+          get :update, :state => order.state
+        end
+      end
     end
     
-    it "an order with 'confirm' state and 'Payzen' payment method should not be changed through update" do
-       session[:order_id] = order_confirm.id
-       order_confirm.stub_chain(:payment_method, :class).and_return(PaymentMethod::Payzen)
-       get :update, :state => order_confirm.state
-       debugger
-       controller.params[:state].should eq "confirm" #means we remained on the samed page which is what was expected.
-    end
-    
-    # transition :from => 'cart',     :to => 'address'
-    # transition :from => 'address',  :to => 'delivery'
-    # transition :from => 'delivery', :to => 'payment'
-    # transition :from => 'confirm',  :to => 'complete'
-    # 
-    # # note: some payment methods will not support a confirm step
-    # transition :from => 'payment',  :to => 'confirm',
-    #                                 :if => Proc.new { G
-    
-    it "should put order in all states but 'confirm' to the next step" do
-      pending
-      session[:order_id] = order_cart.id
-      order_cart.stub_chain(:payzen_validation, :class).and_return(PaymentMethod::Payzen)
-      order_cart.stub(:next).and_return(true)
-      #order_cart.should_receive :payzen_validation
-      #order_cart.should_receive(:checkout_allowed)
-      controller.should_receive :load_order
-      get :update, :state => order_cart.state
-      #order_cart.reload.state.should eq "confirm"
+    describe "with Payzen Payment Method" do
+      before(:each) do
+        order.stub_chain(:payment_method, :class).and_return(PaymentMethod::Check)
+      end
+      
+      it "all kinds of order must go to the next step" do
+        ["cart", "address", "delivery", "confirm"].each do |step|
+          order.stub(:state).and_return(step)
+          order.should_receive(:next)
+          get :update, :state => order.state
+        end
+      end
     end
   end
   
   describe "payzen action" do
     before(:each) do
       @order = Factory :order, :user => user
-      @payment  = double("payment")      
+      @payment = double("payment")      
       @payment.stub(:started_processing)
       @payment.stub(:complete)      
       @payment.stub(:fail)
@@ -70,9 +77,5 @@ describe CheckoutController do
       @payment.should_receive(:complete)    
       get :payzen
     end
-    
-    
-    
   end
-  
 end

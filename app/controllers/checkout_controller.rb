@@ -20,26 +20,29 @@ class CheckoutController < Spree::BaseController
 
   # Updates the order and advances to the next state (when possible.)
   def update
-    if @order.payzen_validation and @order.update_attributes(object_params)
+    if !@order.payzen_payment_step? and @order.update_attributes(object_params)
       # should prevent update from => 'confirm',  to => 'complete' when payment is made with Payzen.
-      # Actually, this has to be done through Payzen callback
       if @order.next
         state_callback(:after)
       else
         flash[:error] = I18n.t(:payment_processing_failed)
-        respond_with(@order, :location => checkout_state_path(@order.state))
+        #respond_with(@order, :location => checkout_state_path(@order.state))
+        redirect_to checkout_state_path(@order.state)
         return
       end
 
       if @order.state == "complete" || @order.completed?
         flash[:notice] = I18n.t(:order_processed_successfully)
         flash[:commerce_tracking] = "nothing special"
-        respond_with(@order, :location => completion_route)
+        #respond_with(@order, :location => completion_route)
+        redirect_to completion_route  
       else
-        respond_with(@order, :location => checkout_state_path(@order.state))
+        #respond_with(@order, :location => checkout_state_path(@order.state))
+        redirect_to checkout_state_path(@order.state)
       end
     else
-      respond_with(@order) { |format| format.html { render :edit } }
+      #respond_with(@order) { |format| format.html { render :edit } }
+      render :edit
     end
   end
   
@@ -47,12 +50,7 @@ class CheckoutController < Spree::BaseController
   # Payzen asynchronous callback
   def payzen
     # Get the order, payment and payzen parameters
-    # if Rails.env == 'production'
-      @order = Order.where(:number => params["vads_order_id"]).first #find_by_number(params["vads_order_id"]) # pas l'ID, le number (mais unique aussi)
-    # else
-    #   @order = current_order
-    # end
-    
+    @order = Order.where(:number => params["vads_order_id"]).first #find_by_number(params["vads_order_id"]) # pas l'ID, le number (mais unique aussi)
     @payment = @order.payments.last #TODO check this
     @payment.started_processing
     

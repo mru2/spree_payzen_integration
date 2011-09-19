@@ -11,8 +11,8 @@ describe Order do
     order3.stub_chain(:payment_method, :class).and_return(PaymentMethod::Payzen)
   end
   
-  specify { order.check_payzen.should  be_false }
-  specify { order2.check_payzen.should be_true }
-  specify { order3.check_payzen.should be_true }
+  specify { order.payzen_payment_step?.should  be_true }
+  specify { order2.payzen_payment_step?.should be_false }
+  specify { order3.payzen_payment_step?.should be_false }
   
 end

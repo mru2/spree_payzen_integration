@@ -7,17 +7,19 @@
   <br clear="left" />
   <%= render "shared/error_messages", :target => @order %>
   <%= hook :checkout_summary_box do %>
-    <div id="checkout-summary">
-      <%= render 'summary', :order => @order %>
-    </div>
+    <% if @order.state != 'confirm' %>
+      <div id="checkout-summary">
+        <%= render 'summary', :order => @order %>
+      </div>
+    <% end %>
   <% end %>
   
-  <%# unless @order.state == "confirm" %>
+  <% if @order.payzen_payment_step? %>
+    <%= render "confirm" %>
+  <% else %>
     <%= form_for @order, :url => update_checkout_path(@order.state), :html => { :id => "checkout_form_#{@order.state}" } do |form| %>
       <%= render @order.state, :form => form %>
       <input id="post-final" type="submit" style="display:none"/>
     <% end %>
-  <%# else  %>
-    <%#= render "confirm" %>
-  <%# end  %>
+  <% end %>
 </div>

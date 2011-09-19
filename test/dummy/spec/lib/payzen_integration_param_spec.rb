@@ -3,31 +3,31 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 describe PayzenIntegration::Params do
   
   describe "class methods" do
-    describe "fill_with_zero" do
-      it "should render 000001 from 1" do
-        PayzenIntegration::Params.fill_with_zero(1,6).should eq "000001" 
+    
+    describe "trans_id" do
+      describe "self.format_time" do
+        it "should format time properly" do
+          Time.stub(:now).and_return Time.new(2011,11,30,23, 55,02)
+          PayzenIntegration::Params.format_time.should eq 235502
+        end
       end
-
-      it "should render 1234567890 from 1234567890" do
-        PayzenIntegration::Params.fill_with_zero("1234567890",6).should eq "1234567890" 
+      
+      describe "get_random" do
+        it "should give a number between 250000 and 750000" do
+          50.times do
+            (250000..750000).should include PayzenIntegration::Params.get_random
+          end
+        end
       end
+      
+      it "should render proper output" do
+        PayzenIntegration::Params.stub(:get_random).and_return(310000)
+        PayzenIntegration::Params.stub(:format_time).and_return(123456)
+        PayzenIntegration::Params.trans_id.should eq 433456
+      end
+      
     end
-
-    describe "self.trans_id(order)" do
-      let(:order) { double("order") }
-      it "should " do
-        order.stub(:id).and_return 1
-        PayzenIntegration::Params.should_receive(:fill_with_zero).with(1,6)
-        PayzenIntegration::Params.trans_id(order)
-      end
-
-      it "should " do
-        order.stub(:id).and_return 900001
-        PayzenIntegration::Params.should_receive(:fill_with_zero).with(1,6)
-        PayzenIntegration::Params.trans_id(order)
-      end
-    end
-
+    
     describe "self.trans_date" do
       it "should format time properly" do
         Time.stub(:now).and_return Time.new(2011,11,30,23, 55,00)
@@ -138,7 +138,7 @@ describe PayzenIntegration::Params do
         PayzenIntegration::Params.stub(:create_string_from_config_hash).and_return "test"
       end
 
-      it "should " do
+      it "should call SHA1" do
         Digest::SHA1.stub :hexdigest
         Digest::SHA1.should_receive(:hexdigest).with "test"
         PayzenIntegration::Params.compute_signature({ :a => "a" })

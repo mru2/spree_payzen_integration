@@ -11,11 +11,11 @@ Order.class_eval do
     return info
   end
   
-  def payzen_validation
-    if self.payment_method.class == PaymentMethod::Payzen and self.state == "confirm"
-      return false
+  def payzen_payment_step?
+    if self.state == "confirm" and self.payment_method.class == PaymentMethod::Payzen
+      true
     else
-      return true 
+      false 
     end
   end
   

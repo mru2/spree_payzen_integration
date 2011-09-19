@@ -6,32 +6,28 @@
 
 <hr />
 
-<% @payzen_params = PayzenIntegration::Params.for_order(@order) %>
-
-<!-- Here to know if the payzen method has been selected -->
-<a href="#" id="payzen_submit">To payzen</a>
-
-<!-- Out of the form because of nested forms trouble in HTML -->
-<%= form_tag 'https://secure.payzen.eu/vads-payment/', :id => "payzen_form", :method => 'post' do %> 
-  <input id="signature" name="signature" type="hidden" value="<%= @payzen_params.signature %>" />
-  <input id="vads_action_mode" name="vads_action_mode" type="hidden" value="<%= @payzen_params.vads_action_mode %>" />
-  <input id="vads_amount" name="vads_amount" type="hidden" value="<%= @payzen_params.vads_amount %>" />
-  <input id="vads_currency" name="vads_currency" type="hidden" value="<%= @payzen_params.vads_currency %>" />
-  <input id="vads_cust_email" name="vads_cust_email" type="hidden" value="<%= @payzen_params.vads_cust_email %>" />
-  <input id="vads_ctx_mode" name="vads_ctx_mode" type="hidden" value="<%= @payzen_params.vads_ctx_mode %>" />
-  <input id="vads_order_id" name="vads_order_id" type="hidden" value="<%= @payzen_params.vads_order_id %>" />
-  <input id="vads_order_info" name="vads_order_info" type="hidden" value="<%= @payzen_params.vads_order_info %>" />
-  <input id="vads_page_action" name="vads_page_action" type="hidden" value="<%= @payzen_params.vads_page_action %>" />
-  <input id="vads_payment_config" name="vads_payment_config" type="hidden" value="<%= @payzen_params.vads_payment_config %>" />
-  <input id="vads_site_id" name="vads_site_id" type="hidden" value="<%= @payzen_params.vads_site_id %>" />
-  <input id="vads_trans_date" name="vads_trans_date" type="hidden" value="<%= @payzen_params.vads_trans_date %>" />
-  <input id="vads_trans_id" name="vads_trans_id" type="hidden" value="<%= @payzen_params.vads_trans_id %>" />
-  <input id="vads_validation_mode" name="vads_validation_mode" type="hidden" value="<%= @payzen_params.vads_validation_mode %>" />
-  <input id="vads_version" name="vads_version" type="hidden" value="<%= @payzen_params.vads_version %>" />
-  <input type="submit" class="continue button primary" value="Vers Payzen"/>
-<% end %>
-
-
-<!-- <div class="form-buttons">
+<% if @order.payzen_payment_step? %>
+  <% @payzen_params = PayzenIntegration::Params.for_order(@order) %>
+  <%= form_tag 'https://secure.payzen.eu/vads-payment/', :id => "payzen_form", :method => 'post' do %> 
+    <input id="signature"            name="signature"            type="hidden" value="<%= @payzen_params.signature %>" />
+    <input id="vads_action_mode"     name="vads_action_mode"     type="hidden" value="<%= @payzen_params.vads_action_mode %>" />
+    <input id="vads_amount"          name="vads_amount"          type="hidden" value="<%= @payzen_params.vads_amount %>" />
+    <input id="vads_currency"        name="vads_currency"        type="hidden" value="<%= @payzen_params.vads_currency %>" />
+    <input id="vads_cust_email"      name="vads_cust_email"      type="hidden" value="<%= @payzen_params.vads_cust_email %>" />
+    <input id="vads_ctx_mode"        name="vads_ctx_mode"        type="hidden" value="<%= @payzen_params.vads_ctx_mode %>" />
+    <input id="vads_order_id"        name="vads_order_id"        type="hidden" value="<%= @payzen_params.vads_order_id %>" />
+    <input id="vads_order_info"      name="vads_order_info"      type="hidden" value="<%= @payzen_params.vads_order_info %>" />
+    <input id="vads_page_action"     name="vads_page_action"     type="hidden" value="<%= @payzen_params.vads_page_action %>" />
+    <input id="vads_payment_config"  name="vads_payment_config"  type="hidden" value="<%= @payzen_params.vads_payment_config %>" />
+    <input id="vads_site_id"         name="vads_site_id"         type="hidden" value="<%= @payzen_params.vads_site_id %>" />
+    <input id="vads_trans_date"      name="vads_trans_date"      type="hidden" value="<%= @payzen_params.vads_trans_date %>" />
+    <input id="vads_trans_id"        name="vads_trans_id"        type="hidden" value="<%= @payzen_params.vads_trans_id %>" />
+    <input id="vads_validation_mode" name="vads_validation_mode" type="hidden" value="<%= @payzen_params.vads_validation_mode %>" />
+    <input id="vads_version"         name="vads_version"         type="hidden" value="<%= @payzen_params.vads_version %>" />
+    <input type="submit" class="continue button primary" value="Vers Payzen"/>
+  <% end %>
+<% else %>
+<div class="form-buttons">
   <input type="submit" class="continue button primary" value="<%=t("place_order") %>"/>
-</div> -->
+</div>
+<% end %>
