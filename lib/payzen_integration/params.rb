@@ -48,7 +48,7 @@ module PayzenIntegration
       p.vads_payment_config   = 'SINGLE'                                    # pour paiement en une fois, on est pas Emmaus
       p.vads_site_id          = (PayzenIntegration::Config.get :site_id)    # notre identifiant
       p.vads_trans_date       = trans_date                                  # Correspond à la date locale du site marchand au format AAAAMMJJHHMMSS.
-      p.vads_trans_id         = trans_id                                    # Ce paramètre est obligatoire. Il est constitué de 6 caractères numériques et doit être unique pour chaque transaction pour une boutique donnée sur la journée. En effet l'identifiant unique de transaction au niveau de la plateforme de paiement est constitué du vads_site_id, de vads_trans_date restreint à la valeur de la journée (partie correspondant à AAAAMMJJ) et de vads_trans_id. Il est à la charge du site marchand de garantir cette unicité sur la journée. Il doit être impérativement compris entre 000000 et 899999. La tranche 900000 et 999999 est interdite. Remarque : une valeur de longueur inférieure à 6 provoque une erreur lors de l’appel à l’URL de paiement. Merci de respecter cette longueur de 6 caractères.
+      p.vads_trans_id         = trans_id(order)                                    # Ce paramètre est obligatoire. Il est constitué de 6 caractères numériques et doit être unique pour chaque transaction pour une boutique donnée sur la journée. En effet l'identifiant unique de transaction au niveau de la plateforme de paiement est constitué du vads_site_id, de vads_trans_date restreint à la valeur de la journée (partie correspondant à AAAAMMJJ) et de vads_trans_id. Il est à la charge du site marchand de garantir cette unicité sur la journée. Il doit être impérativement compris entre 000000 et 899999. La tranche 900000 et 999999 est interdite. Remarque : une valeur de longueur inférieure à 6 provoque une erreur lors de l’appel à l’URL de paiement. Merci de respecter cette longueur de 6 caractères.
       p.vads_validation_mode  = "0"                                         # validation automatique, 1 pour manuelle sur back office payzen
       p.vads_version          = 'V2'                                        # doit rester inchangé (tant qu'on utilise la V2!)
       p
@@ -105,21 +105,35 @@ module PayzenIntegration
     end
   
     # Compute the trans_id attribute for an order
-    def self.trans_id
+    def self.trans_id(order)
       # Compris entre 000000 et 899999, et fait 6 caractères
-      # Made this way: HHMMSS + RR000000 with RR a random number between 25 and 75
-      # example: 18h52m23s, random number: 10 => 285223
-      format_time + get_random
+      # Made this way: X YYYYY
+      # X is a random number
+      # Y is the rest of the division of the object id by 99999 (modulo)
+      get_random.to_s  + fill_with_zero(get_modulo_of_id(order.id), 5)
+    end
+  
+    # Add "0"s to the beginning of s, until it's length is l
+    def self.fill_with_zero(s, l)
+      ss = s.to_s
+      #should not happen in the way we use it.
+      if ss.length > l
+        raise "fill_with_zero Error: #{ss} is already more than #{l} characters." if ss.length
+      elsif ss.length < l
+        fill_with_zero ("0" + ss), l
+      else
+        return ss
+      end
     end
     
     # Renvoie HHMMSS
-    def self.format_time
-      Time.now.strftime('%H%M%S').to_i 
+    def self.get_modulo_of_id(id)
+      id % 99999
     end
     
     def self.get_random
       r = Random.new
-      r.rand(25...75)*10000
+      r.rand(1...8)
     end
 
   end

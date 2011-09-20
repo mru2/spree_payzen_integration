@@ -4,28 +4,46 @@ describe PayzenIntegration::Params do
   
   describe "class methods" do
     
-    describe "trans_id" do
-      describe "self.format_time" do
-        it "should format time properly" do
-          Time.stub(:now).and_return Time.new(2011,11,30,23, 55,02)
-          PayzenIntegration::Params.format_time.should eq 235502
+    describe "trans_id(order)" do
+          
+      describe "fill_with_zero" do
+        it "should render 00001 from 1" do
+          PayzenIntegration::Params.fill_with_zero(1,5).should eq "00001" 
+        end
+
+        it "should render 12345 from 12345" do
+          PayzenIntegration::Params.fill_with_zero(12345,5).should eq "12345" 
+        end
+        
+        it "should raise an error when length of input is already above length asked" do
+          lambda { PayzenIntegration::Params.fill_with_zero(12345,4)}.should raise_error
+        end
+      end
+      
+      describe "get_modulo_of_id(id)" do
+        it "should render 0 for 99999" do
+          PayzenIntegration::Params.get_modulo_of_id(99999).should eq 0
+        end
+        
+        it "should render 1 for 100000" do
+          PayzenIntegration::Params.get_modulo_of_id(100000).should eq 1
         end
       end
       
       describe "get_random" do
-        it "should give a number between 250000 and 750000" do
-          50.times do
-            (250000..750000).should include PayzenIntegration::Params.get_random
+        it "should render a number between 0 and 8" do
+          40.times do
+            (1...8).should include PayzenIntegration::Params.get_random
           end
         end
       end
-      
-      it "should render proper output" do
-        PayzenIntegration::Params.stub(:get_random).and_return(310000)
-        PayzenIntegration::Params.stub(:format_time).and_return(123456)
-        PayzenIntegration::Params.trans_id.should eq 433456
+
+      it "should render proper id of six characters" do
+        order = double("order")
+        order.stub(:id).and_return 9000000
+        PayzenIntegration::Params.stub(:get_random).and_return(7)
+        PayzenIntegration::Params.trans_id(order).should eq "700090"
       end
-      
     end
     
     describe "self.trans_date" do
