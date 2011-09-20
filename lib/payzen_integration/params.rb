@@ -118,7 +118,7 @@ module PayzenIntegration
       ss = s.to_s
       #should not happen in the way we use it.
       if ss.length > l
-        raise "fill_with_zero Error: #{ss} is already more than #{l} characters." if ss.length
+        raise "fill_with_zero Error: #{ss} is already more than #{l} characters."
       elsif ss.length < l
         fill_with_zero ("0" + ss), l
       else
@@ -126,11 +126,12 @@ module PayzenIntegration
       end
     end
     
-    # Renvoie HHMMSS
+    # Returns HHMMSS
     def self.get_modulo_of_id(id)
       id % 99999
     end
     
+    # returns an integer within [1, 8]
     def self.get_random
       r = Random.new
       r.rand(1...8)
