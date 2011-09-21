@@ -27,7 +27,7 @@ Spork.prefork do
     config.mock_with :rspec
 
     # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
-    config.fixture_path = "#{::Rails.root}/spec/fixtures"
+    config.fixture_path = "#{::Rails.root}/spec/support/fixtures"
 
     # If you're not using ActiveRecord, or you'd prefer not to run each of your
     # examples within a transaction, remove the following line or assign false
@@ -54,17 +54,3 @@ Spork.each_run do
   Dir[Rails.root.join("spec/support/**/*.rb")].each {|f| require f}
 
 end
-
-# --- Instructions ---
-# - Sort through your spec_helper file. Place as much environment loading 
-#   code that you don't normally modify during development in the 
-#   Spork.prefork block.
-# - Place the rest under Spork.each_run block
-# - Any code that is left outside of the blocks will be ran during preforking
-#   and during each_run!
-# - These instructions should self-destruct in 10 seconds.  If they don't,
-#   feel free to delete them.
-#
-
-
-

@@ -10,10 +10,6 @@ class CheckoutController < Spree::BaseController
   # The current order doesn't exist anymore, we don't want to load it
   before_filter :load_order, :except => [:payzen, :payzen_back]
   
-  # The admin privileges are asked for payzen_back
-  # This fixes the issue (the user still needs to be logged in)
-  before_filter :check_authorization, :except => :payzen_back
-
   rescue_from Spree::GatewayError, :with => :rescue_from_spree_gateway_error
 
   respond_to :html
@@ -49,8 +45,12 @@ class CheckoutController < Spree::BaseController
   
   # Payzen asynchronous callback
   def payzen
+  
     # Get the order, payment and payzen parameters
-    @order = Order.where(:number => params["vads_order_id"]).first #find_by_number(params["vads_order_id"]) # pas l'ID, le number (mais unique aussi)
+    @order = Order.where(:number => params["vads_order_id"]).first # search by number (unique). Don't know why find_by_number fails here
+  
+    render_404 and return if @order.nil?
+    
     @payment = @order.payments.last #TODO check this
     @payment.started_processing
     
@@ -58,17 +58,13 @@ class CheckoutController < Spree::BaseController
     begin 
       PayzenIntegration::Params.check_returned_params(params) # if Rails.env == 'production'
     rescue Exception => e
-      # log the exception ? Save it as a payment parameter ?
+      # TODO: log the exception ? Save it as a payment parameter ?
+      # should we really make the payment failed?
       @payment.fail
-      render :text => "Payzen error : #{e.message} for order #{@order.id}" and return
+      render_404 and return
     end
   
     @payment.complete
-
-    # @order.next #:from => 'payment', :to => 'confirm' 
-    # state_callback(:after)
-    # state_callback(:before)
-    
     @order.next #:from => 'confirm', :to => 'complete' 
     state_callback(:after)
     render :text => "done"

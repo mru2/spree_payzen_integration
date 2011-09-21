@@ -1,0 +1,197 @@
+---
+zone_members_001:
+  id: 4914820
+  zone_id: 1
+  zoneable_id: 13
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_002:
+  id: 5807739
+  zone_id: 1
+  zoneable_id: 96
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_003:
+  id: 35022990
+  zone_id: 1
+  zoneable_id: 188
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_004:
+  id: 91991191
+  zone_id: 1
+  zoneable_id: 163
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_005:
+  id: 120011419
+  zone_id: 1
+  zoneable_id: 52
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_006:
+  id: 120937060
+  zone_id: 1
+  zoneable_id: 117
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_007:
+  id: 195044517
+  zone_id: 2
+  zoneable_id: 214
+  zoneable_type: Country
+  created_at: '2009-06-04 17:22:41.000000'
+  updated_at: '2009-06-04 17:22:41.000000'
+zone_members_008:
+  id: 244414130
+  zone_id: 1
+  zoneable_id: 68
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_009:
+  id: 394938353
+  zone_id: 1
+  zoneable_id: 162
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_010:
+  id: 423866172
+  zone_id: 1
+  zoneable_id: 20
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_011:
+  id: 424792003
+  zone_id: 1
+  zoneable_id: 90
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_012:
+  id: 477297967
+  zone_id: 1
+  zoneable_id: 184
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_013:
+  id: 506358563
+  zone_id: 1
+  zoneable_id: 53
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_014:
+  id: 507251676
+  zone_id: 1
+  zoneable_id: 116
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_015:
+  id: 546142054
+  zone_id: 1
+  zoneable_id: 142
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_016:
+  id: 690576312
+  zone_id: 1
+  zoneable_id: 62
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_017:
+  id: 691747661
+  zone_id: 1
+  zoneable_id: 110
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_018:
+  id: 729140670
+  zone_id: 1
+  zoneable_id: 183
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_019:
+  id: 739772837
+  zone_id: 1
+  zoneable_id: 213
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_020:
+  id: 776249265
+  zone_id: 1
+  zoneable_id: 30
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_021:
+  id: 777453396
+  zone_id: 1
+  zoneable_id: 74
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_022:
+  id: 807406092
+  zone_id: 1
+  zoneable_id: 51
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_023:
+  id: 808610553
+  zone_id: 1
+  zoneable_id: 125
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_024:
+  id: 847027202
+  zone_id: 1
+  zoneable_id: 167
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_025:
+  id: 890329113
+  zone_id: 1
+  zoneable_id: 194
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_026:
+  id: 929017584
+  zone_id: 1
+  zoneable_id: 98
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_027:
+  id: 966149671
+  zone_id: 1
+  zoneable_id: 67
+  zoneable_type: Country
+  created_at: '2009-06-04 13:22:26.000000'
+  updated_at: '2009-06-04 13:22:26.000000'
+zone_members_028:
+  id: 1017582644
+  zone_id: 2
+  zoneable_id: 35
+  zoneable_type: Country
+  created_at: '2009-06-04 17:22:41.000000'
+  updated_at: '2009-06-04 17:22:41.000000'

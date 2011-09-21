@@ -63,12 +63,10 @@ module PayzenIntegration
       raise AuthMode,           "Wrong auth mode : #{params[:vads_auth_mode]}" if params[:vads_auth_mode] != "FULL"       # Autorisation du paiement
       
       # Check if the signature is valid
-      temp = {}.merge(params)
       signature = params[:signature]
-      temp.delete(:signature)
-      confirm_signature = compute_signature(temp)
+      computed_signature = compute_signature(params)
     
-      if signature != confirm_signature then 
+      if signature != computed_signature 
         raise Signature, "Wrong signature"
       end
       return true  
@@ -90,10 +88,11 @@ module PayzenIntegration
       Digest::SHA1.hexdigest create_string_from_config_hash hash
     end
     
+    # only akes into account the keys beginning with vads
     def self.create_string_from_config_hash(hash)
       to_code = String.new
       hash.keys.sort.each do |key|
-        to_code = to_code + hash[key].to_s + "+"
+        to_code = to_code + hash[key].to_s + "+" if key.to_s =~ /^vads*/
       end
       to_code += (PayzenIntegration::Config.get :certificate).to_s
     end

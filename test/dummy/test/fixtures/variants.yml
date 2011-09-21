@@ -1,0 +1,15 @@
+---
+variants_001:
+  id: 1
+  product_id: 1
+  sku: ''
+  price: 12
+  weight: !!null 
+  height: !!null 
+  width: !!null 
+  depth: !!null 
+  deleted_at: !!null 
+  is_master: t
+  count_on_hand: 0
+  cost_price: !!null 
+  position: !!null 

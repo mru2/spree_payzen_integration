@@ -1,0 +1,7 @@
+---
+roles_001:
+  id: 1
+  name: admin
+roles_002:
+  id: 2
+  name: user

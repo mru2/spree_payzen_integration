@@ -1,5 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
- 
+
 describe PayzenIntegration::Params do
   
   describe "class methods" do
@@ -69,7 +69,7 @@ describe PayzenIntegration::Params do
        it "should return an object" do
          payzen_param.should be_a PayzenIntegration::Params
        end
-       
+
        specify { payzen_param.vads_action_mode.should eq "INTERACTIVE" }
        specify { payzen_param.vads_amount.should eq 12000 }
        specify { payzen_param.vads_ctx_mode.should eq "TEST" }
@@ -130,9 +130,7 @@ describe PayzenIntegration::Params do
       it "should raise if vads_payment_certificate is empty" do
         lambda { PayzenIntegration::Params.check_returned_params(@valid_payzen_attributes.merge!({:signature => "bad"})) }.should raise_error PayzenIntegration::Signature
       end
-      
     end
-    
     
     describe "create_string_from_config_hash" do
       before(:each) do
@@ -141,8 +139,13 @@ describe PayzenIntegration::Params do
       end
 
       it "should sort hash" do
-        hash = { :b => "b", :a => 1, :c => "c"}
+        hash = { :vads_b => "b", :vads_a => 1, :vads_c => "c"}
         PayzenIntegration::Params.create_string_from_config_hash(hash).should eq "1+b+c+12345"
+      end
+      
+      it "should ignore strings not beginning with 'vads'" do
+        hash = { :vads_b => "b", :a => 1, :c => "c"}
+        PayzenIntegration::Params.create_string_from_config_hash(hash).should eq "b+12345"
       end
     
       after(:each) do

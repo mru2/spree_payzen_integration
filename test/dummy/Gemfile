@@ -17,3 +17,4 @@ gem "shoulda-matchers"
 gem 'selenium-webdriver', '2.5.0'
 gem "faker"
 gem "ruby-debug19"
+gem "cucumber"
