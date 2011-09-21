@@ -30,14 +30,11 @@ class CheckoutController < Spree::BaseController
       if @order.state == "complete" || @order.completed?
         flash[:notice] = I18n.t(:order_processed_successfully)
         flash[:commerce_tracking] = "nothing special"
-        #respond_with(@order, :location => completion_route)
         redirect_to completion_route  
       else
-        #respond_with(@order, :location => checkout_state_path(@order.state))
         redirect_to checkout_state_path(@order.state)
       end
     else
-      #respond_with(@order) { |format| format.html { render :edit } }
       render :edit
     end
   end
@@ -45,21 +42,24 @@ class CheckoutController < Spree::BaseController
   
   # Payzen asynchronous callback
   def payzen
-  
     # Get the order, payment and payzen parameters
     @order = Order.where(:number => params["vads_order_id"]).first # search by number (unique). Don't know why find_by_number fails here
   
     render_404 and return if @order.nil?
     
     @payment = @order.payments.last #TODO check this
+    
+    #TODO: should handle case when user pays AND cancels payment
+    #TODO: briefing david sur bouton annuler page "confirm"
     @payment.started_processing
     
     # Check if the payment is ok
     begin 
-      PayzenIntegration::Params.check_returned_params(params) # if Rails.env == 'production'
+      PayzenIntegration::Params.check_returned_signature(params)
+      #TODO check: if order is at the good step and amount passed is in conformity with the bill!
     rescue Exception => e
       # TODO: log the exception ? Save it as a payment parameter ?
-      # should we really make the payment failed?
+      # should we really make the payment fail?
       @payment.fail
       render_404 and return
     end
@@ -72,10 +72,9 @@ class CheckoutController < Spree::BaseController
     
   # Payzen return to website
   def payzen_back
-    # Get the last order
-    @order = current_user.orders.complete.last    
-    redirect_to cart_path and return unless @order
-     
+    #TODO: should handle case when user pays AND cancels payment
+    # Get the current order
+    @order = current_order
     # Show the summary
     flash[:notice] = I18n.t(:order_processed_successfully)
     flash[:commerce_tracking] = "nothing special"    
@@ -106,7 +105,8 @@ class CheckoutController < Spree::BaseController
     @order = current_order
     redirect_to cart_path and return unless @order and @order.checkout_allowed?
     redirect_to cart_path and return if @order.completed?
-    @order.state = params[:state] if params[:state]
+    redirect_to checkout_state_path("confirm") if @order.payzen_payment_step? and params[:state] != "confirm" #once user is at 'confirm' step and pays with Payzen, he can't go back.
+    @order.state = params[:state] if params[:state] 
     state_callback(:before)
   end
 

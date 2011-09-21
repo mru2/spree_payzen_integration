@@ -1,0 +1,6 @@
+This set of fixtures contains:
+* everything needed to have a spree website operationnal
+* a User with NO admin rights
+* this user is purchasing one product
+* the payment method is payzen
+* the state of his order is "confirm"

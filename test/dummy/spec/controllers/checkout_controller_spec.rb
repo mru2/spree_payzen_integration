@@ -72,14 +72,14 @@ describe CheckoutController do
         end
 
         it "should fail to complete payment with partial attributes" do
-          PayzenIntegration::Params.should_receive(:check_returned_params).and_raise
+          PayzenIntegration::Params.should_receive(:check_returned_signature).and_raise
 
           @payment.should_receive(:fail)    
           get :payzen
         end
 
         it "should complete payment with valid attributes" do
-          PayzenIntegration::Params.should_receive(:check_returned_params).and_return(:true)
+          PayzenIntegration::Params.should_receive(:check_returned_signature).and_return(:true)
 
           @payment.should_receive(:complete)    
           get :payzen
@@ -93,6 +93,7 @@ describe CheckoutController do
       fixtures_list = Dir[Rails.root.join("spec/support/fixtures/*.yml")].map { |f| f.scan(/.*\/(.*)\.yml/).first.first.to_sym } 
       fixtures *fixtures_list
       
+      let(:order) { Order.where(:number => "R425653488").first }
       before(:each) do
         @basic_payzen_post = { :vads_action_mode            => "INTERACTIVE", 
                                :vads_payment_config         => "SINGLE", 
@@ -143,6 +144,14 @@ describe CheckoutController do
                                }
          @basic_payzen_post[:signature] = PayzenIntegration::Params.compute_signature(@basic_payzen_post)
       end
+      
+      it "once reached 'confirm' step with 'Payzen' payment method, user can't go back to another checkout step" do
+        session[:order_id] = order
+        get :edit, :state => "payment"
+
+        response.status.should eq 302
+        response.body.should include "/checkout/confirm"
+      end
     
       it "posting to 'payzen' action should not require to be logged in" do
         post :payzen
@@ -156,8 +165,7 @@ describe CheckoutController do
       it "valid post to 'payzen' should close the order & validate payment" do
         post :payzen, @basic_payzen_post
         
-        order = Order.where(:number => "R425653488").first
-        order.state.should eq "complete"
+        order.reload.state.should eq "complete"
         order.payment.state.should eq "completed"
         response.body.should eq "done"
       end

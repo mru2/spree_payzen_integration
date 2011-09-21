@@ -86,7 +86,7 @@ describe PayzenIntegration::Params do
        specify { payzen_param.vads_order_info.should eq "order_info" }
     end
     
-    describe "self.check_returned_params" do
+    describe "self.check_returned_signature" do
       
       before(:each) do
         @valid_payzen_attributes = {
@@ -112,23 +112,23 @@ describe PayzenIntegration::Params do
       end
 
       it "should succeed with valid attibutes" do
-        PayzenIntegration::Params.check_returned_params(@valid_payzen_attributes).should be_true
+        PayzenIntegration::Params.check_returned_signature(@valid_payzen_attributes).should be_true
       end
       
       it "should raise if vads_result is different from 00" do
-        lambda { PayzenIntegration::Params.check_returned_params(@valid_payzen_attributes.merge!({:vads_result => "wrong"})) }.should raise_error PayzenIntegration::ReturnCode
+        lambda { PayzenIntegration::Params.check_returned_signature(@valid_payzen_attributes.merge!({:vads_result => "wrong"})) }.should raise_error PayzenIntegration::ReturnCode
       end
       
       it "should raise if vads_payment_certificate is empty" do
-        lambda { PayzenIntegration::Params.check_returned_params(@valid_payzen_attributes.merge!({:vads_payment_certificate => ""})) }.should raise_error PayzenIntegration::PaymentCertificate
+        lambda { PayzenIntegration::Params.check_returned_signature(@valid_payzen_attributes.merge!({:vads_payment_certificate => ""})) }.should raise_error PayzenIntegration::PaymentCertificate
       end
       
       it "should raise if auth_mode is wrong" do
-        lambda { PayzenIntegration::Params.check_returned_params(@valid_payzen_attributes.merge!({:vads_auth_mode => "bad"})) }.should raise_error PayzenIntegration::AuthMode
+        lambda { PayzenIntegration::Params.check_returned_signature(@valid_payzen_attributes.merge!({:vads_auth_mode => "bad"})) }.should raise_error PayzenIntegration::AuthMode
       end
       
       it "should raise if vads_payment_certificate is empty" do
-        lambda { PayzenIntegration::Params.check_returned_params(@valid_payzen_attributes.merge!({:signature => "bad"})) }.should raise_error PayzenIntegration::Signature
+        lambda { PayzenIntegration::Params.check_returned_signature(@valid_payzen_attributes.merge!({:signature => "bad"})) }.should raise_error PayzenIntegration::Signature
       end
     end
     

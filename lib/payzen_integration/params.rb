@@ -55,20 +55,14 @@ module PayzenIntegration
     end
     
     # Check the validity of the returned params from payzen
-    def self.check_returned_params(params)
-
+    def self.check_returned_signature(params)
       # Check if payment was ok
       raise ReturnCode,         "Wrong return code : #{params[:vads_result]}"  unless params[:vads_result] == "00"        # code de retour, "00" = "tout s'est bien passé"
       raise PaymentCertificate, "No payment certificate"                       if params[:vads_payment_certificate] == "" # Pas de certificat = probleme
       raise AuthMode,           "Wrong auth mode : #{params[:vads_auth_mode]}" if params[:vads_auth_mode] != "FULL"       # Autorisation du paiement
       
-      # Check if the signature is valid
-      signature = params[:signature]
-      computed_signature = compute_signature(params)
-    
-      if signature != computed_signature 
-        raise Signature, "Wrong signature"
-      end
+      # Check if the signature is valid    
+      raise Signature, "Wrong signature" if params[:signature] != compute_signature(params) 
       return true  
     end
 
