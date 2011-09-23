@@ -48,7 +48,7 @@ describe PayzenIntegration::Params do
     
     describe "self.trans_date" do
       it "should format time properly" do
-        Time.stub(:now).and_return Time.new(2011,11,30,23, 55,00)
+        Time.stub(:now).and_return Time.gm(2011,11,30,23, 55,00)
         PayzenIntegration::Params.trans_date.should eq "20111130235500"
       end
     end
