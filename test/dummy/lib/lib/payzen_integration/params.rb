@@ -23,7 +23,8 @@ module PayzenIntegration
                :vads_trans_date,
                :vads_trans_id,
                :vads_validation_mode,
-               :vads_version ]
+               :vads_version,
+               :vads_return_mode ]
                
     # Create the accessors and assessors
     PARAMS.each{|p| attr_accessor p}
@@ -51,6 +52,7 @@ module PayzenIntegration
       p.vads_trans_id         = trans_id(order)                                    # Ce paramètre est obligatoire. Il est constitué de 6 caractères numériques et doit être unique pour chaque transaction pour une boutique donnée sur la journée. En effet l'identifiant unique de transaction au niveau de la plateforme de paiement est constitué du vads_site_id, de vads_trans_date restreint à la valeur de la journée (partie correspondant à AAAAMMJJ) et de vads_trans_id. Il est à la charge du site marchand de garantir cette unicité sur la journée. Il doit être impérativement compris entre 000000 et 899999. La tranche 900000 et 999999 est interdite. Remarque : une valeur de longueur inférieure à 6 provoque une erreur lors de l’appel à l’URL de paiement. Merci de respecter cette longueur de 6 caractères.
       p.vads_validation_mode  = "0"                                         # validation automatique, 1 pour manuelle sur back office payzen
       p.vads_version          = 'V2'                                        # doit rester inchangé (tant qu'on utilise la V2!)
+      p.vads_return_mode          = 'GET'                                     
       p
     end
     
