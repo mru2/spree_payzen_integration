@@ -1,7 +1,7 @@
 CheckoutController.class_eval do
   
   before_filter :check_authorization, :except => :payzen
-  before_filter :check_registration, :except => [:registration, :update_registration, :payzen]
+  before_filter :check_registration, :except => [:payzen, :registration, :update_registration]
   before_filter :load_order, :except => [:payzen, :payzen_back]
 
   helper :users

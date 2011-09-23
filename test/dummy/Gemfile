@@ -5,7 +5,7 @@ gem 'rails', '3.0.9'
 gem 'sqlite3-ruby', :require => 'sqlite3'
 gem 'spree', '0.60.1'
 gem 'spree_i18n', :git => 'git://github.com/spree/spree_i18n.git'
-gem "payzen_integration", :path => "../../"
+gem "payzen_integration", :path => "lib"
 
 gem 'spork'
 gem 'rspec-rails'
@@ -16,5 +16,8 @@ gem 'factory_girl_rails'
 gem "shoulda-matchers"
 gem 'selenium-webdriver', '2.5.0'
 gem "faker"
-gem "ruby-debug19"
+gem "ruby-debug"
 gem "cucumber"
+gem 'guard'
+gem 'guard-spork'
+gem 'guard-rspec'

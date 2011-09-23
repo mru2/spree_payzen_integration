@@ -56,10 +56,10 @@ class CheckoutController < Spree::BaseController
     rescue Exception => e
       # TODO: log the exception ? Save it as a payment parameter ?
       # should we really make the payment fail?
-      #@payment.fail
-      @order.state = "canceled"
-      @order.cancel #:from => 'confirm', :to => 'canceled' 
-      state_callback(:after)
+      @payment.fail
+      #@order.state = "canceled"
+      #@order.cancel #:from => 'confirm', :to => 'canceled' 
+      #state_callback(:after)
       render_404 and return
     end
   
@@ -77,9 +77,11 @@ class CheckoutController < Spree::BaseController
     # Show the summary
     if @order.step == "completed"
       flash[:notice] = I18n.t(:order_processed_successfully)
-      flash[:commerce_tracking] = "nothing special"    
+      flash[:commerce_tracking] = "nothing special" 
+      render "orders/show" and return 
+    else
+      redirect_to checkout_state_path("confirm")
     end
-    render "orders/show"
   end
   
   private
