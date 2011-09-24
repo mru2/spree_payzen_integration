@@ -1,5 +1,5 @@
 Factory.define(:order) do |record|
-  # associations:
+  record.state "cart"
   record.association(:user, :factory => :user)
   record.association(:bill_address, :factory => :address)
   record.completed_at nil

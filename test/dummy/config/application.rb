@@ -8,7 +8,7 @@ Bundler.require(:default, Rails.env) if defined?(Bundler)
 
 module Dummy
   class Application < Rails::Application
-  require 'spree_site'
+  #require 'spree_site'
   config.middleware.use "RedirectLegacyProductUrl"
   config.middleware.use "SeoAssist"
     # Settings in config/environments/* take precedence over those specified here.

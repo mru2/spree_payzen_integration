@@ -14,7 +14,7 @@ class CheckoutController < Spree::BaseController
   # Updates the order and advances to the next state (when possible.)
   def update
     if !@order.payzen_payment_step? and @order.update_attributes(object_params)
-      # should prevent update from => 'confirm',  to => 'complete' when payment is made with Payzen.
+      # prevent update from => 'confirm',  to => 'complete' when payment is made with Payzen.
       if @order.next
         state_callback(:after)
       else
@@ -36,50 +36,109 @@ class CheckoutController < Spree::BaseController
     end
   end
   
-  
-  # Payzen asynchronous callback
+  # Payzen server to server callback
+  # ----------------------------------------------------------------------------------------------------------------------    ---------------------------------------------
+  # | ID | From Payzen                 |  Order initial  | Order final |  Payment initial | Payment final  |  Payzen     |    |  ID |  Order     |  Payment | Payzen back |
+  # ----------------------------------------------------------------------------------------------------------------------    ---------------------------------------------
+  # | A  | post without vads_order_id  |     *           |     *       |                  |                | 404         |    | A   | confirm    |     *    | checkout    |
+  # |    | or order not found          |                 |             |                  |                |             |    ---------------------------------------------
+  # ----------------------------------------------------------------------------------------------------------------------    | B   | complete   |     *    | show order  |
+  # | B  | post with order_id but      |  confirm        | canceled    |  checkout        |   fail         | 404         |    ---------------------------------------------
+  # |    | wrong signature             |                 |             |  error           |                |             |    | C   | canceled   |     *    | root        |
+  # ----------------------------------------------------------------------------------------------------------------------    ---------------------------------------------
+  # | C  | post with wrong amount/curr |  confirm        | canceled    |  checkout/error  |   fail         | 404         |    | D   | not found  |     *    | 404         |
+  # ----------------------------------------------------------------------------------------------------------------------    ---------------------------------------------
+  # | D  | post with good signature    |  confirm        | confirm     |  checkout        |   error        | 200         |   
+  # |    | and status canceled         |                 |             |                  |                |             |   
+  # ----------------------------------------------------------------------------------------------------------------------    
+  # | E  | post completely valid       |  confirm        | complete    |  checkout        |   complete     | 200         |    
+  # ----------------------------------------------------------------------------------------------------------------------    
+  # | F  | post completely valid       |  confirm        | complete    |  error           |   complete     | 200         |    
+  # ----------------------------------------------------------------------------------------------------------------------    
+  # | G  |        *                    |  complete       | unchanged   |      *           |        *       | 404         |    
+  # ----------------------------------------------------------------------------------------------------------------------    
+  # | H  |        *                    |  canceled       | unchanged   |      *           |        *       | 404         |    
+  # ----------------------------------------------------------------------------------------------------------------------    
+  # | I  |        *                    | anything but    |     *       |      *           |        *       | 404         |    
+  # |    |                             | conf/comp/cancel|             |                  |                |             |    
+  # ----------------------------------------------------------------------------------------------------------------------    
   def payzen
     # Get the order, payment and payzen parameters
-    @order = Order.where(:number => params["vads_order_id"]).first # search by number (unique). Don't know why find_by_number fails here
-  
-    render_404 and return if @order.nil?
+    @order = Order.where(:number => params["vads_order_id"]).first # search by number (unique). Don't know why find_by_number fails here    
+    
+    render :status => 500, :text => "reference to invalid order"  and return if @order.nil? || !@order.confirm? #case A, G, H & I
     
     @payment = @order.payments.last
-    
-    #TODO: should handle case when user pays AND cancels payment
     @payment.started_processing
     
     # Check if the payment is ok
     begin 
       PayzenIntegration::Params.check_returned_signature(params)
-      #TODO check: if order is at the good step and amount passed is in conformity with the bill!
-    rescue Exception => e
-      # TODO: log the exception ? Save it as a payment parameter ?
-      # should we really make the payment fail?
-      #@payment.fail
-      @order.state = "canceled"
-      @order.cancel #:from => 'confirm', :to => 'canceled' 
-      state_callback(:after)
-      render_404 and return
+      raise PayzenIntegration::Params::InvalidAmount unless PayzenIntegration::Params.conformity_between?(@order, params)
+    rescue PayzenIntegration::Signature => e                #case B
+      @payment.log_entries.create(:details => e.message) 
+      @payment.fail
+      @order.next   #:from => 'confirm',  :to => 'complete' 
+      @order.cancel #:from => 'complete', :to => 'canceled' 
+      render :status => 500, :text => "invalid query"
+    rescue PayzenIntegration::Params::InvalidAmount => e    #case C
+      @payment.log_entries.create(:details => e.message) 
+      @payment.error
+      @order.next   #:from => 'confirm',  :to => 'complete' 
+      @order.cancel #:from => 'complete', :to => 'canceled' 
+      redirect_to checkout_state_path("confirm") and return
+    rescue PayzenIntegration::OrderCanceled => e            #case D
+      @payment.log_entries.create(:details => e.message) 
+      @payment.error
+      render :status => 200, :text => "ok, order canceled"
+    rescue Exception => e  #case C
+      @payment.log_entries.create(:details => e.message) 
+      @payment.error
+      redirect_to checkout_state_path("confirm") and return
     end
-  
+    #case E and F
     @payment.complete
-    @order.next #:from => 'confirm', :to => 'complete' 
+    @order.next       #:from => 'confirm', :to => 'complete' 
     state_callback(:after)
-    render :text => "done"
+    render :status => 200, :text => "payment ok"
   end
-    
+  
   # Payzen return to website
+  # ---------------------------------------------
+  # |  ID |  Order     |  Payment | Payzen back |
+  # ---------------------------------------------
+  # | A   | confirm    | checkout | checkout    |
+  # ---------------------------------------------
+  # | B   | confirm    | error    | checkout    |
+  # ---------------------------------------------
+  # | C   | complete   |     *    | show order  |
+  # ---------------------------------------------
+  # | D   | canceled   |     *    | root        |
+  # ---------------------------------------------
+  # | E   | not found  |     *    | 404         |
+  # ---------------------------------------------
   def payzen_back
-    #TODO: should handle case when user pays AND cancels payment
-    # Get the current order
-    @order = current_order
-    # Show the summary
-    if @order.step == "completed"
+    @order = Order.where(:number => params["vads_order_id"]).first # search by number (unique). Don't know why find_by_number fails here    
+    render_404            and return if @order.nil?                              # case E
+    redirect_to root_path and return if @order.canceled?                         # case D
+    
+    if @order.complete?                                                          # case C
       flash[:notice] = I18n.t(:order_processed_successfully)
-      flash[:commerce_tracking] = "nothing special"    
+      #flash[:commerce_tracking] = "nothing special" 
+      redirect_to completion_route and return 
+    elsif @order.confirm?
+      if @order.payment.error?                                                   # case B
+        flash[:notice] = "Vous avez quitté Payzen sans payer, si vous voulez annuler la commande cliquez sur le bouton..."
+      end
     end
-    render "orders/show"
+    # case A, nothing special to do and should never happen
+    render "edit"
+  end
+  
+  def destroy_current_order
+    @order = current_order
+    current_order.destroy unless @order.complete?
+    redirect_to root_path
   end
   
   private
@@ -106,7 +165,6 @@ class CheckoutController < Spree::BaseController
     @order = current_order
     redirect_to cart_path and return unless @order and @order.checkout_allowed?
     redirect_to cart_path and return if @order.completed?
-    redirect_to checkout_state_path("confirm") if @order.payzen_payment_step? and params[:state] != "confirm" #once user is at 'confirm' step and pays with Payzen, he can't go back.
     @order.state = params[:state] if params[:state] 
     state_callback(:before)
   end

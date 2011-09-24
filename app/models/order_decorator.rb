@@ -18,6 +18,9 @@ Order.class_eval do
       false 
     end
   end
-  
-  
+
+  def at_unrelevant_step_for_payzen_payment?
+    [ "cart?", "address?", "delivery?", "payment?", "returned?", "awaiting_return?", "resumed?"].inject(false) { |memo, f| self.send(f) || memo }
+  end
+
 end

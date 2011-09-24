@@ -6,7 +6,7 @@ GIT
       spree_core (>= 0.30.0)
 
 PATH
-  remote: lib
+  remote: ../../
   specs:
     payzen_integration (0.60.99)
 

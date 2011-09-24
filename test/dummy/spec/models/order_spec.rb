@@ -14,5 +14,7 @@ describe Order do
   specify { order.payzen_payment_step?.should  be_true }
   specify { order2.payzen_payment_step?.should be_false }
   specify { order3.payzen_payment_step?.should be_false }
-  
+  specify { order.at_unrelevant_step_for_payzen_payment?.should  be_false }
+  specify { order3.at_unrelevant_step_for_payzen_payment?.should be_true }
+
 end

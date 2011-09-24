@@ -4,6 +4,8 @@ module PayzenIntegration
   class PaymentCertificate < StandardError; end
   class AuthMode < StandardError; end
   class Signature < StandardError; end
+  class InvalidAmount < StandardError; end
+  class OrderCanceled < StandardError; end
 
   # Represents the params sent to and returned from payzen
   class Params
@@ -23,7 +25,8 @@ module PayzenIntegration
                :vads_trans_date,
                :vads_trans_id,
                :vads_validation_mode,
-               :vads_version ]
+               :vads_version,
+               :vads_return_mode ]
                
     # Create the accessors and assessors
     PARAMS.each{|p| attr_accessor p}
@@ -48,25 +51,31 @@ module PayzenIntegration
       p.vads_payment_config   = 'SINGLE'                                    # pour paiement en une fois, on est pas Emmaus
       p.vads_site_id          = (PayzenIntegration::Config.get :site_id)    # notre identifiant
       p.vads_trans_date       = trans_date                                  # Correspond à la date locale du site marchand au format AAAAMMJJHHMMSS.
-      p.vads_trans_id         = trans_id(order)                                    # Ce paramètre est obligatoire. Il est constitué de 6 caractères numériques et doit être unique pour chaque transaction pour une boutique donnée sur la journée. En effet l'identifiant unique de transaction au niveau de la plateforme de paiement est constitué du vads_site_id, de vads_trans_date restreint à la valeur de la journée (partie correspondant à AAAAMMJJ) et de vads_trans_id. Il est à la charge du site marchand de garantir cette unicité sur la journée. Il doit être impérativement compris entre 000000 et 899999. La tranche 900000 et 999999 est interdite. Remarque : une valeur de longueur inférieure à 6 provoque une erreur lors de l’appel à l’URL de paiement. Merci de respecter cette longueur de 6 caractères.
+      p.vads_trans_id         = trans_id                                    # Ce paramètre est obligatoire. Il est constitué de 6 caractères numériques et doit être unique pour chaque transaction pour une boutique donnée sur la journée. En effet l'identifiant unique de transaction au niveau de la plateforme de paiement est constitué du vads_site_id, de vads_trans_date restreint à la valeur de la journée (partie correspondant à AAAAMMJJ) et de vads_trans_id. Il est à la charge du site marchand de garantir cette unicité sur la journée. Il doit être impérativement compris entre 000000 et 899999. La tranche 900000 et 999999 est interdite. Remarque : une valeur de longueur inférieure à 6 provoque une erreur lors de l’appel à l’URL de paiement. Merci de respecter cette longueur de 6 caractères.
       p.vads_validation_mode  = "0"                                         # validation automatique, 1 pour manuelle sur back office payzen
       p.vads_version          = 'V2'                                        # doit rester inchangé (tant qu'on utilise la V2!)
+      p.vads_return_mode      = 'POST'                                     
       p
     end
     
     # Check the validity of the returned params from payzen
     def self.check_returned_signature(params)
       # Check if payment was ok
-      raise ReturnCode,         "Wrong return code : #{params[:vads_result]}"  unless params[:vads_result] == "00"        # code de retour, "00" = "tout s'est bien passé"
+      raise OrderCanceled,      "Payment canceled by customer"                 if params[:vads_result]  == "17"        # Annulation par client
+      raise ReturnCode,         "Wrong return code : #{params[:vads_result]}"  unless params[:vads_result] == "00"        # code de retour, "00" = "tout s'est bien passé" 
       raise PaymentCertificate, "No payment certificate"                       if params[:vads_payment_certificate] == "" # Pas de certificat = probleme
-      raise AuthMode,           "Wrong auth mode : #{params[:vads_auth_mode]}" if params[:vads_auth_mode] != "FULL"       # Autorisation du paiement
+      raise AuthMode,           "Wrong auth mode : #{params[:vads_auth_mode]}" if params[:vads_auth_mode] != "FULL"       # Autorisation du paiement 
       
       # Check if the signature is valid    
       raise Signature, "Wrong signature" if params[:signature] != compute_signature(params) 
       return true  
     end
+    
+    def self.conformity_between?(order, params)
+      (params[:vads_currency] == "978") and ((order.total * 100).to_i.to_s == params[:vads_amount])
+    end
 
-    private
+   # private
     
     #creates a hash containing all payzen parameters
     def payzen_param_hash
@@ -85,7 +94,7 @@ module PayzenIntegration
     # only akes into account the keys beginning with vads
     def self.create_string_from_config_hash(hash)
       to_code = String.new
-      hash.keys.sort.each do |key|
+      hash.stringify_keys!.keys.sort.each do |key|
         to_code = to_code + hash[key].to_s + "+" if key.to_s =~ /^vads*/
       end
       to_code += (PayzenIntegration::Config.get :certificate).to_s
@@ -96,39 +105,42 @@ module PayzenIntegration
       date = Time.now
       date.strftime('%Y%m%d%H%M%S') # Renvoie AAAAMMJJHHMMSS
     end
-  
+    
+    def self.trans_id
+      date = Time.now
+      date.strftime('%H%M%S') # Renvoie HHMMSS
+    end 
     # Compute the trans_id attribute for an order
-    def self.trans_id(order)
-      # Compris entre 000000 et 899999, et fait 6 caractères
-      # Made this way: X YYYYY
-      # X is a random number
-      # Y is the rest of the division of the object id by 99999 (modulo)
-      get_random.to_s  + fill_with_zero(get_modulo_of_id(order.id), 5)
-    end
-  
-    # Add "0"s to the beginning of s, until it's length is l
-    def self.fill_with_zero(s, l)
-      ss = s.to_s
-      #should not happen in the way we use it.
-      if ss.length > l
-        raise "fill_with_zero Error: #{ss} is already more than #{l} characters."
-      elsif ss.length < l
-        fill_with_zero ("0" + ss), l
-      else
-        return ss
-      end
-    end
-    
-    # Returns HHMMSS
-    def self.get_modulo_of_id(id)
-      id % 99999
-    end
-    
-    # returns an integer within [1, 8]
-    def self.get_random
-      r = Random.new
-      r.rand(1...8)
-    end
+    # def self.trans_id(order)
+    #   # Compris entre 000000 et 899999, et fait 6 caractères
+    #   # Made this way: X YYYYY
+    #   # X is a random number
+    #   # Y is the rest of the division of the object id by 99999 (modulo)
+    #   get_random.to_s  + fill_with_zero(get_modulo_of_id(order.id), 5)
+    # end
+    #   
+    # # Add "0"s to the beginning of s, until it's length is l
+    # def self.fill_with_zero(s, l)
+    #   ss = s.to_s
+    #   #should not happen in the way we use it.
+    #   if ss.length > l
+    #     raise "fill_with_zero Error: #{ss} is already more than #{l} characters."
+    #   elsif ss.length < l
+    #     fill_with_zero ("0" + ss), l
+    #   else
+    #     return ss
+    #   end
+    # end
+    # 
+    # # Returns HHMMSS
+    # def self.get_modulo_of_id(id)
+    #   id % 99999
+    # end
+    # 
+    # # returns an integer within [1, 8]
+    # def self.get_random
+    #   rand(7) + 1
+    # end
 
   end
 
