@@ -109,39 +109,7 @@ module PayzenIntegration
     def self.trans_id
       date = Time.now
       date.strftime('%H%M%S') # Renvoie HHMMSS
-    end 
-    # Compute the trans_id attribute for an order
-    # def self.trans_id(order)
-    #   # Compris entre 000000 et 899999, et fait 6 caractères
-    #   # Made this way: X YYYYY
-    #   # X is a random number
-    #   # Y is the rest of the division of the object id by 99999 (modulo)
-    #   get_random.to_s  + fill_with_zero(get_modulo_of_id(order.id), 5)
-    # end
-    #   
-    # # Add "0"s to the beginning of s, until it's length is l
-    # def self.fill_with_zero(s, l)
-    #   ss = s.to_s
-    #   #should not happen in the way we use it.
-    #   if ss.length > l
-    #     raise "fill_with_zero Error: #{ss} is already more than #{l} characters."
-    #   elsif ss.length < l
-    #     fill_with_zero ("0" + ss), l
-    #   else
-    #     return ss
-    #   end
-    # end
-    # 
-    # # Returns HHMMSS
-    # def self.get_modulo_of_id(id)
-    #   id % 99999
-    # end
-    # 
-    # # returns an integer within [1, 8]
-    # def self.get_random
-    #   rand(7) + 1
-    # end
-
+    end
   end
 
 end

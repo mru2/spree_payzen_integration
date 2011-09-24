@@ -168,51 +168,12 @@ describe PayzenIntegration::Params do
     end
     
     it "should return true when conform" do
-      PayzenIntegration::Params.conformity_between?(@order, @valid_params).should be_true
+      PayzenIntegration::Params.check_conformity_between(@order, @valid_params).should be_nil
     end
     
     it "should render false when not conform" do
-      PayzenIntegration::Params.conformity_between?(@order, @valid_params.merge!({:vads_currency => "42"})).should be_false
-      PayzenIntegration::Params.conformity_between?(@order, @valid_params.merge!({:vads_amount => "42"})).should be_false
+      lambda { PayzenIntegration::Params.check_conformity_between(@order, @valid_params.merge!({:vads_currency => "42"}))}.should raise_error PayzenIntegration::InvalidAmount
+      lambda { PayzenIntegration::Params.check_conformity_between(@order, @valid_params.merge!({:vads_amount => "42"}))  }.should raise_error PayzenIntegration::InvalidAmount
     end
   end
 end
-
-# describe "fill_with_zero" do
-#   it "should render 00001 from 1" do
-#     PayzenIntegration::Params.fill_with_zero(1,5).should eq "00001" 
-#   end
-# 
-#   it "should render 12345 from 12345" do
-#     PayzenIntegration::Params.fill_with_zero(12345,5).should eq "12345" 
-#   end
-#   
-#   it "should raise an error when length of input is already above length asked" do
-#     lambda { PayzenIntegration::Params.fill_with_zero(12345,4)}.should raise_error
-#   end
-# end
-# 
-# describe "get_modulo_of_id(id)" do
-#   it "should render 0 for 99999" do
-#     PayzenIntegration::Params.get_modulo_of_id(99999).should eq 0
-#   end
-#   
-#   it "should render 1 for 100000" do
-#     PayzenIntegration::Params.get_modulo_of_id(100000).should eq 1
-#   end
-# end
-# 
-# describe "get_random" do
-#   it "should render a number between 0 and 8" do
-#     40.times do
-#       (1...8).should include PayzenIntegration::Params.get_random
-#     end
-#   end
-# end
-# 
-# it "should render proper id of six characters" do
-#   order = double("order")
-#   order.stub(:id).and_return 9000000
-#   PayzenIntegration::Params.stub(:get_random).and_return(7)
-#   PayzenIntegration::Params.trans_id(order).should eq "700090"
-# end
