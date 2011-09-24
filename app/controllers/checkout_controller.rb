@@ -76,28 +76,29 @@ class CheckoutController < Spree::BaseController
       PayzenIntegration::Params.check_returned_signature(params)
       PayzenIntegration::Params.check_conformity_between(@order, params)
     rescue PayzenIntegration::Signature => e                #case B
-      @payment.log_entries.create(:details => e.message) 
+      @payment.log_entries.create(:details => PayzenIntegration::Params.create_log(e.message, params)) 
       @payment.fail
       @order.next   #:from => 'confirm',  :to => 'complete' 
       @order.cancel #:from => 'complete', :to => 'canceled' 
       render :status => 404, :text => "invalid query" and return
     rescue PayzenIntegration::InvalidAmount => e    #case C
-      @payment.log_entries.create(:details => e.message) 
+      @payment.log_entries.create(:details => PayzenIntegration::Params.create_log(e.message, params)) 
       @payment.error
       @order.next   #:from => 'confirm',  :to => 'complete' 
       @order.cancel #:from => 'complete', :to => 'canceled' 
       redirect_to checkout_state_path("confirm") and return
     rescue PayzenIntegration::OrderCanceled => e            #case D
-      @payment.log_entries.create(:details => e.message) 
+      @payment.log_entries.create(:details => PayzenIntegration::Params.create_log(e.message, params)) 
       @payment.error
       render :status => 200, :text => "ok, order canceled" and return
     rescue Exception => e  #case C
-      @payment.log_entries.create(:details => e.message) 
+      @payment.log_entries.create(:details => PayzenIntegration::Params.create_log(e.message, params)) 
       @payment.error
       redirect_to checkout_state_path("confirm") and return
     end
     #case E and F
     @payment.complete
+    @payment.log_entries.create(:details => PayzenIntegration::Params.create_log("Payment is successful", params)) 
     @order.next       #:from => 'confirm', :to => 'complete' 
     state_callback(:after)
     render :status => 200, :text => "payment ok"

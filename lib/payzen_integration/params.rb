@@ -61,7 +61,7 @@ module PayzenIntegration
     # Check the validity of the returned params from payzen
     def self.check_returned_signature(params)
       # Check if payment was ok
-      raise OrderCanceled,      "Payment canceled by customer"                 if params[:vads_result]  == "17"        # Annulation par client
+      raise OrderCanceled,      "Payment canceled by customer"                 if params[:vads_result]  == "17"           # Annulation par client
       raise ReturnCode,         "Wrong return code : #{params[:vads_result]}"  unless params[:vads_result] == "00"        # code de retour, "00" = "tout s'est bien passé" 
       raise PaymentCertificate, "No payment certificate"                       if params[:vads_payment_certificate] == "" # Pas de certificat = probleme
       raise AuthMode,           "Wrong auth mode : #{params[:vads_auth_mode]}" if params[:vads_auth_mode] != "FULL"       # Autorisation du paiement 
@@ -109,6 +109,16 @@ module PayzenIntegration
     def self.trans_id
       date = Time.now
       date.strftime('%H%M%S') # Renvoie HHMMSS
+    end
+    
+    def self.create_log(message, parameters)
+      raw_array = Array.new
+      raw_array << message
+      parameters.stringify_keys!.keys.sort.each do |key|
+        raw_array << "#{key}: #{parameters[key]}"
+      end
+      raw_array * "
+"
     end
   end
 

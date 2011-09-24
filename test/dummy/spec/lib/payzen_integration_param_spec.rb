@@ -2,7 +2,18 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe PayzenIntegration::Params do
   
-  describe "class methods" do
+  context "class methods" do
+    
+    describe "create_log(message, parameters)" do
+      it "should format parameters properly" do
+        message = "Payment canceled by customer"
+        parameters = { :vads_site_id => "99563855", :vads_trans_date => "20110918222213" }
+        expected_log = "Payment canceled by customer
+vads_site_id: 99563855
+vads_trans_date: 20110918222213"
+        PayzenIntegration::Params.create_log(message, parameters).should eq expected_log        
+      end
+    end
     
     describe "trans_id(order)" do
       it "should format time properly" do
