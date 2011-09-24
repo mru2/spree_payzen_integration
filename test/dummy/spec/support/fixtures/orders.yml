@@ -10,7 +10,7 @@ orders_001:
   state: confirm
   adjustment_total: 0
   credit_total: 0
-  completed_at: !!null 
+#  completed_at: nil
   bill_address_id: 1
   ship_address_id: 2
   payment_total: 0
@@ -18,4 +18,4 @@ orders_001:
   shipment_state: pending
   payment_state: balance_due
   email: spree@example.com
-  special_instructions: !!null 
+#  special_instructions: !!null 

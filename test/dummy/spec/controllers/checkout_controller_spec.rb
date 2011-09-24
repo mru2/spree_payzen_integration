@@ -75,44 +75,6 @@ describe CheckoutController do
   end
   
   describe "payzen action" do
-    
-    describe "stubbed logic" do
-      before(:each) do
-        #controller.class.skip_before_filter :check_authorization
-        #@order = Factory :order_without_user
-        #@payment = double("payment")      
-        #@payment.stub(:started_processing)
-        #@payment.stub(:complete)      
-        #@payment.stub(:fail)
-        #@order.stub_chain(:payments, :last).and_return(@payment)
-      end
-        
-      # it "posting to 'payzen' action should not require to be logged in" do
-      #   post :payzen
-      # end
-      #     
-      # it "post with no attributes should render 404" do
-      #   post :payzen
-      #   @payment.should_not_receive(:started_processing)
-      #   response.status.should eq 404
-      # end
-      #  
-      # it "should fail to complete payment with partial attributes" do
-      #   Order.stub(:where).and_return [@order]
-      #   PayzenIntegration::Params.should_receive(:check_returned_signature).and_raise
-      #  
-      #   @payment.should_receive(:fail)    
-      #   get :payzen
-      # end
-      #  
-      # it "should complete payment with valid attributes" do
-      #   Order.stub(:where).and_return [@order]
-      #   PayzenIntegration::Params.should_receive(:check_returned_signature).and_return(:true)
-      #  
-      #   @payment.should_receive(:complete)    
-      #   get :payzen
-      # end  
-    end
   
     describe "tests using real and full fixtures" do
     
@@ -129,7 +91,7 @@ describe CheckoutController do
                                :vads_threeds_eci            => "", 
                                :vads_page_action            => "PAYMENT", 
                                :vads_threeds_cavv           => "", 
-                               :vads_effective_amount       => "4098", 
+                               :vads_effective_amount       => "1200", 
                                :vads_payment_certificate    => "bade02a27471188a461453ab5470cc61ff88fee3", 
                                :vads_card_number            => "[FILTERED]", 
                                :vads_subscription           => "", 
@@ -159,7 +121,7 @@ describe CheckoutController do
                                :vads_threeds_sign_valid     => "", 
                                :vads_threeds_xid            => "", 
                                :vads_threeds_enrolled       => "", 
-                               :vads_amount                 => "4098", 
+                               :vads_amount                 => "1200", 
                                :vads_language               => "fr", 
                                :vads_card_brand             => "CB", 
                                :vads_capture_delay          => "0", 
@@ -168,30 +130,109 @@ describe CheckoutController do
                                :vads_order_id               => "R425653488", 
                                :vads_extra_result           => "", 
                                :vads_auth_mode              => "FULL"
-                               }
+                               }.with_indifferent_access
          @basic_payzen_post[:signature] = PayzenIntegration::Params.compute_signature(@basic_payzen_post)
       end
       
       it "payzen route should not require authentication" do
         post :payzen, @basic_payzen_post
       end
+      
+      it "case A, no order found" do
+        params_with_wrong_order_id = @basic_payzen_post.merge({:vads_order_id => "wrong"})
+        post :payzen, params_with_wrong_order_id
+        
+        response.status.should eq 404
+      end
+      
+      it "case A bis, no order id passed" do
+        @basic_payzen_post.delete("vads_order_id")
+        post :payzen, @basic_payzen_post
+        
+        response.status.should eq 404
+      end
+      
+      it "case B" do
+        post :payzen, @basic_payzen_post.merge!({:signature => "invalid"})
+      
+        order.reload.state.should eq  "canceled"
+        order.payment.state.should eq "failed"
+        response.status.should eq 404
+      end
     
-      it "valid post to 'payzen' should complete order & payment" do
+      it "case C, wrong amount" do
+        post :payzen, @basic_payzen_post.merge!({:vads_amount => "000"})
+      
+        order.reload.state.should eq  "canceled"
+        order.payment.state.should eq "failed"
+        response.status.should eq 404
+      end
+      
+      it "case C, wrong currency" do
+        post :payzen, @basic_payzen_post.merge!({:vads_currency => "000"})
+      
+        order.reload.state.should eq  "canceled"
+        order.payment.state.should eq "failed"
+        response.status.should eq 404
+      end
+      
+      it "case D" do
+        post :payzen, @basic_payzen_post.merge!({:vads_result => "17"})
+      
+        order.reload.state.should eq  "confirm"
+        order.payment.state.should eq "error"
+        response.status.should eq 200
+      end
+      
+      it "case E" do
         post :payzen, @basic_payzen_post
       
         order.reload.state.should eq "complete"
         order.payment.state.should eq "completed"
-        response.body.should eq "done"
+        response.status.should eq 200
+        response.body.should eq "payment ok"
       end
       
-      it "invalid post to 'payzen' should close the order & validate payment" do
-        @basic_payzen_post.merge!({:signature => "invalid"})
+      it "case F" do
+        order.payment.error
+        order.payment.state.should eq "error"
         post :payzen, @basic_payzen_post
       
-        #order.reload.state.should eq "canceled"
-        order.payment.state.should eq "failed"
-        response.status.should eq 404
+        order.reload.state.should eq "complete"
+        order.payment.state.should eq "completed"
+        response.status.should eq 200
+        response.body.should eq "payment ok"
       end
+      
+      it "case G" do
+        order.next # from confirm to complete
+        post :payzen, @basic_payzen_post
+      
+        order.reload.state.should eq "complete"
+        response.status.should eq 400
+        response.body.should eq "reference to invalid order"
+      end  
+      
+      it "case H" do
+        order.update_attribute(:state, "canceled") # from confirm to cancel
+        order.cancel # from confirm to cancel
+        post :payzen, @basic_payzen_post
+      
+        order.reload.state.should eq "canceled"
+        response.status.should eq 400
+        response.body.should eq "reference to invalid order"
+      end
+      
+      it "case I" do
+        order.update_attribute(:state, "returned") # from confirm to cancel
+        post :payzen, @basic_payzen_post
+      
+        order.reload.state.should eq "returned"
+        response.status.should eq 400
+        response.body.should eq "reference to invalid order"
+      end    
+            
     end
   end
+
 end
