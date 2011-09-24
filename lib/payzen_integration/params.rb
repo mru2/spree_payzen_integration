@@ -71,8 +71,8 @@ module PayzenIntegration
       return true  
     end
     
-    def self.conformity_between?(order, params)
-      (params[:vads_currency] == "978") and ((order.total * 100).to_i.to_s == params[:vads_amount])
+    def self.check_conformity_between(order, params)
+      raise InvalidAmount unless (params[:vads_currency] == "978") and ((order.total * 100).to_i.to_s == params[:vads_amount])
     end
 
    # private

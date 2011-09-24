@@ -2,10 +2,10 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 #require 'ruby-debug'
 
 describe CheckoutController do
+  include Devise::TestHelpers
   
   describe "tests using simplified factories" do
     let(:user)  { Factory :user  }
-    include Devise::TestHelpers
   
     before(:each) do
       sign_in user
@@ -120,6 +120,7 @@ describe CheckoutController do
       fixtures *fixtures_list
     
       let(:order) { Order.where(:number => "R425653488").first }
+      
       before(:each) do
         @basic_payzen_post = { :vads_action_mode            => "INTERACTIVE", 
                                :vads_payment_config         => "SINGLE", 
@@ -169,6 +170,10 @@ describe CheckoutController do
                                :vads_auth_mode              => "FULL"
                                }
          @basic_payzen_post[:signature] = PayzenIntegration::Params.compute_signature(@basic_payzen_post)
+      end
+      
+      it "payzen route should not require authentication" do
+        post :payzen, @basic_payzen_post
       end
     
       it "valid post to 'payzen' should complete order & payment" do

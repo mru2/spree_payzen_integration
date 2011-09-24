@@ -2,7 +2,7 @@
 # Checkout object.  There's enough distinct logic specific to checkout which has nothing to do with updating an
 # order that this approach is waranted.
 class CheckoutController < Spree::BaseController
-  ssl_required
+  ssl_required  
 
   # Already executed in checkout controller before_filter :load_order 
   protect_from_forgery :except => [:payzen]
@@ -63,6 +63,7 @@ class CheckoutController < Spree::BaseController
   # |    |                             | conf/comp/cancel|             |                  |                |             |    
   # ----------------------------------------------------------------------------------------------------------------------    
   def payzen
+    debugger
     # Get the order, payment and payzen parameters
     @order = Order.where(:number => params["vads_order_id"]).first # search by number (unique). Don't know why find_by_number fails here    
     
@@ -74,14 +75,14 @@ class CheckoutController < Spree::BaseController
     # Check if the payment is ok
     begin 
       PayzenIntegration::Params.check_returned_signature(params)
-      raise PayzenIntegration::Params::InvalidAmount unless PayzenIntegration::Params.conformity_between?(@order, params)
+      PayzenIntegration::Params.check_conformity_between(@order, params)
     rescue PayzenIntegration::Signature => e                #case B
       @payment.log_entries.create(:details => e.message) 
       @payment.fail
       @order.next   #:from => 'confirm',  :to => 'complete' 
       @order.cancel #:from => 'complete', :to => 'canceled' 
       render :status => 500, :text => "invalid query"
-    rescue PayzenIntegration::Params::InvalidAmount => e    #case C
+    rescue PayzenIntegration::InvalidAmount => e    #case C
       @payment.log_entries.create(:details => e.message) 
       @payment.error
       @order.next   #:from => 'confirm',  :to => 'complete' 
