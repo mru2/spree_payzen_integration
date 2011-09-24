@@ -19,7 +19,6 @@ class CheckoutController < Spree::BaseController
         state_callback(:after)
       else
         flash[:error] = I18n.t(:payment_processing_failed)
-        #respond_with(@order, :location => checkout_state_path(@order.state))
         redirect_to checkout_state_path(@order.state)
         return
       end
@@ -55,19 +54,19 @@ class CheckoutController < Spree::BaseController
   # ----------------------------------------------------------------------------------------------------------------------    
   # | F  | post completely valid       |  confirm        | complete    |  error           |   complete     | 200         |    
   # ----------------------------------------------------------------------------------------------------------------------    
-  # | G  |        *                    |  complete       | unchanged   |      *           |        *       | 404         |    
+  # | G  |        *                    |  complete       | unchanged   |      *           |        *       | 400         |    
   # ----------------------------------------------------------------------------------------------------------------------    
-  # | H  |        *                    |  canceled       | unchanged   |      *           |        *       | 404         |    
+  # | H  |        *                    |  canceled       | unchanged   |      *           |        *       | 400         |    
   # ----------------------------------------------------------------------------------------------------------------------    
-  # | I  |        *                    | anything but    |     *       |      *           |        *       | 404         |    
+  # | I  |        *                    | anything but    |     *       |      *           |        *       | 400         |    
   # |    |                             | conf/comp/cancel|             |                  |                |             |    
   # ----------------------------------------------------------------------------------------------------------------------    
   def payzen
-    debugger
     # Get the order, payment and payzen parameters
     @order = Order.where(:number => params["vads_order_id"]).first # search by number (unique). Don't know why find_by_number fails here    
+    render :status => 404, :text => "reference to invalid order"  and return if @order.nil?      #case A
     
-    render :status => 500, :text => "reference to invalid order"  and return if @order.nil? || !@order.confirm? #case A, G, H & I
+    render :status => 400, :text => "reference to invalid order"  and return if !@order.confirm? #case G, H & I
     
     @payment = @order.payments.last
     @payment.started_processing
@@ -81,7 +80,7 @@ class CheckoutController < Spree::BaseController
       @payment.fail
       @order.next   #:from => 'confirm',  :to => 'complete' 
       @order.cancel #:from => 'complete', :to => 'canceled' 
-      render :status => 500, :text => "invalid query"
+      render :status => 404, :text => "invalid query" and return
     rescue PayzenIntegration::InvalidAmount => e    #case C
       @payment.log_entries.create(:details => e.message) 
       @payment.error
@@ -91,7 +90,7 @@ class CheckoutController < Spree::BaseController
     rescue PayzenIntegration::OrderCanceled => e            #case D
       @payment.log_entries.create(:details => e.message) 
       @payment.error
-      render :status => 200, :text => "ok, order canceled"
+      render :status => 200, :text => "ok, order canceled" and return
     rescue Exception => e  #case C
       @payment.log_entries.create(:details => e.message) 
       @payment.error
@@ -129,7 +128,7 @@ class CheckoutController < Spree::BaseController
       redirect_to completion_route and return 
     elsif @order.confirm?
       if @order.payment.error?                                                   # case B
-        flash[:notice] = "Vous avez quitté Payzen sans payer, si vous voulez annuler la commande cliquez sur le bouton..."
+        flash[:notice] = I18n.t(:order_declined_on_payzen)
       end
     end
     # case A, nothing special to do and should never happen

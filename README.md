@@ -13,6 +13,8 @@ To add Payzen Payment to Spree:
 
 * I guess, you'd like to adapt the design to your taste. Just grab the logic in the files: `checkout/_confirm` and `checkout/edit`
 
+When user comes back from payzen and declined payment, you can customize the flash message in your locale yml file, the key is: `:order_declined_on_payzen`
+
 Tests
 =====
 

@@ -3,9 +3,9 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe CheckoutController do
   include Devise::TestHelpers
+  let(:user)  { Factory :user }
   
   describe "tests using simplified factories" do
-    let(:user)  { Factory :user  }
   
     before(:each) do
       sign_in user
@@ -65,23 +65,81 @@ describe CheckoutController do
           end
         end
       end  
-    end    
-    
-    describe "payzen_back" do
-      it "should redirect to checkout when current_order isn't complete" do
-        
-      end
     end
   end
   
-  describe "payzen action" do
-  
-    describe "tests using real and full fixtures" do
+  describe "tests using real and full fixtures" do
     
-      fixtures_list = Dir[Rails.root.join("spec/support/fixtures/*.yml")].map { |f| f.scan(/.*\/(.*)\.yml/).first.first.to_sym } 
-      fixtures *fixtures_list
+    fixtures_list = Dir[Rails.root.join("spec/support/fixtures/*.yml")].map { |f| f.scan(/.*\/(.*)\.yml/).first.first.to_sym } 
+    fixtures *fixtures_list
+    # fixtures represent a user ordering an item, proceeded to confirm step
     
-      let(:order) { Order.where(:number => "R425653488").first }
+    let(:order) { Order.where(:number => "R425653488").first }
+    
+    context "requiring user logged in" do
+      
+      before(:each) do
+        order.update_attribute(:user_id, user.id)
+        sign_in user
+        session[:order_id] = order.id
+      end
+      
+      describe "redirect_if_checkout_and_payzen" do        
+        it "should render true for authorized pages" do
+          [{:action => "destroy_current_order"}, {:action => "payzen_back"}, {:action => "edit", :state => "confirm"}, {:action => "update", :state => "confirm"}].each do |parameters|
+            controller.belongs_to_payzen_authorized_page?(parameters.merge({:controller => "checkout"}).with_indifferent_access).should be_true
+          end
+        end
+      end
+      
+      describe "payzen_back" do
+      
+        before(:each) do
+          @basic_payzen_post = { :vads_order_id => "R425653488" }.with_indifferent_access
+        end
+      
+        it "case A" do
+          post :payzen_back, @basic_payzen_post
+          response.status.should eq 200
+          response.body.should == "" # checking there was a render
+        end
+      
+        it "case B" do
+          order.payment.error
+          post :payzen_back, @basic_payzen_post
+
+          response.status.should eq 200
+          flash[:notice].should include "order_declined_on_payzen"
+          response.body.should eq ""
+        end
+      
+        it "case C" do
+          order.next # from confirm to complete 
+          post :payzen_back, @basic_payzen_post
+        
+          response.status.should eq 302
+          response.body.should include "orders/R425653488"
+          flash[:notice].should eq "Your order has been processed successfully"
+        end
+      
+        it "case D" do
+          order.next   # from confirm to complete 
+          order.cancel # from complete to cancel
+        
+          post :payzen_back, @basic_payzen_post
+          response.status.should eq 302
+          response.body.should include "\"http://test.host/\"" # root url
+        end
+      
+        it "case E" do
+          post :payzen_back
+          response.status.should eq 404
+        end
+      end    
+    
+    end
+    
+    describe "payzen action" do
       
       before(:each) do
         @basic_payzen_post = { :vads_action_mode            => "INTERACTIVE", 

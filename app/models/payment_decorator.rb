@@ -13,7 +13,7 @@ Payment.class_eval do
     
     #this represents error from payzen
     event :error do
-      transition :from => ['checkout', 'pending', 'completed'], :to => 'error'
+      transition :from => ['checkout', 'pending', 'completed', 'processing'], :to => 'error'
     end
     
     # With card payments this represents authorizing the payment
