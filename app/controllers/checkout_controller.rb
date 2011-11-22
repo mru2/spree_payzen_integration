@@ -5,7 +5,7 @@ class CheckoutController < Spree::BaseController
   ssl_required  
 
   # Already executed in checkout controller before_filter :load_order 
-  protect_from_forgery :except => [:payzen]
+  protect_from_forgery :except => [:payzen, :payzen_back]
   
   rescue_from Spree::GatewayError, :with => :rescue_from_spree_gateway_error
 
