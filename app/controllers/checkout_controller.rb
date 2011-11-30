@@ -125,6 +125,9 @@ class CheckoutController < Spree::BaseController
     
     if @order.complete?                                                          # case C
       flash[:notice] = I18n.t(:order_processed_successfully)
+      # Clearing the cart. Have to do it here because the user's session
+      # is unaccessible from a callback from payzen
+      session[:order_id] = nil if (session[:order_id] == @order.id)
       #flash[:commerce_tracking] = "nothing special" 
       redirect_to completion_route and return 
     elsif @order.confirm?
