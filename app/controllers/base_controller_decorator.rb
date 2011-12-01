@@ -5,7 +5,10 @@ Spree::BaseController.class_eval do
   #once user is at 'confirm' step and pays with Payzen, he can't go back. he can only destory his order
   def redirect_if_checkout_and_payzen
     @order = current_order
-    redirect_to checkout_state_path("confirm") and return if (@order && @order.payzen_payment_step? && !belongs_to_payzen_authorized_page?(params))
+    if (@order && @order.payzen_payment_step? && !belongs_to_payzen_authorized_page?(params))
+      flash.keep
+      redirect_to checkout_state_path("confirm") and return 
+    end
   end
   
   def belongs_to_payzen_authorized_page? paramz
