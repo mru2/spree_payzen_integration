@@ -132,7 +132,7 @@ class CheckoutController < Spree::BaseController
       redirect_to completion_route and return 
     elsif @order.confirm?
       if @order.payment.error?                                                   # case B
-        flash[:notice] = I18n.t(:order_declined_on_payzen)
+        flash[:error] = I18n.t(:order_declined_on_payzen)
       end
     end
     # case A, nothing special to do and should never happen
@@ -197,7 +197,7 @@ class CheckoutController < Spree::BaseController
   end
 
   def rescue_from_spree_gateway_error
-    flash[:error] = t('spree_gateway_error_flash_for_checkout')
+    flash[:error] = t(:spree_gateway_error_flash_for_checkout)
     render :edit
   end
 
